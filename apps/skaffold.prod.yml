@@ -1,0 +1,36 @@
+apiVersion: skaffold/v2alpha3
+kind: Config
+metadata:
+  name: tms-user-service
+deploy:
+  kubectl:
+    manifests:
+      - ./infra/k8s/*
+build:
+  googleCloudBuild:
+    projectId: tms-dev-464113
+  artifacts:
+    - image: yaseralazm/user-service
+      context: user-service
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        manual:
+          - src: 'src/**/*.ts'
+            dest: /app/src
+            strip: src/
+          - src: 'src/**/*.js'
+            dest: /app/src
+            strip: src/
+          - src: 'package.json'
+            dest: /app/package.json
+          - src: 'tsconfig*.json'
+            dest: /app/
+          - src: 'prisma/**/*'
+            dest: /app/prisma/
+            strip: prisma/
+portForward:
+  - resourceType: service
+    resourceName: user-srv
+    port: 4001
+    localPort: 4001
