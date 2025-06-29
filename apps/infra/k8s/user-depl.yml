@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: yaseralazm/user-service
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:postgres@postgres-srv:5432/tms?schema=public
+            - name: JWT_SECRET
+              value: your-super-secret-key-change-this-in-production
+            - name: NODE_ENV
+              value: development # Change this manually for prod
+            - name: PORT
+              value: '4001'
+          ports:
+            - containerPort: 4001
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-srv -p 5432 -U postgres; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+          resources:
+            requests:
+              memory: '64Mi'
+              cpu: '100m'
+            limits:
+              memory: '128Mi'
+              cpu: '200m'
+        - name: migrate
+          image: yaseralazm/user-service
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:postgres@postgres-srv:5432/tms?schema=public
+          command:
+            - npx
+            - prisma
+            - migrate
+            - deploy
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-srv
+spec:
+  selector:
+    app: user-service
+  ports:
+    - protocol: TCP
+      port: 4001
+      targetPort: 4001
+  type: ClusterIP
