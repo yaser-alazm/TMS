@@ -34,6 +34,10 @@ portForward:
     resourceName: user-srv
     port: 4001
     localPort: 4001
+  - resourceType: service
+    resourceName: postgres-srv
+    port: 5432
+    localPort: 5432
 profiles:
   - name: dev
     build:
