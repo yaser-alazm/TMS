@@ -4,17 +4,17 @@ metadata:
   name: ingress-srv
   annotations:
     nginx.ingress.kubernetes.io/use-regex: 'true'
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:
   ingressClassName: nginx
   rules:
     - host: tms.dev
       http:
         paths:
-          - path: /api/user/?(.*)
+          - path: /(.*)
             pathType: ImplementationSpecific
             backend:
               service:
-                name: user-srv
+                name: gateway-srv
                 port:
-                  number: 4001
+                  number: 4000

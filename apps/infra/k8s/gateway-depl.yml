@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      tolerations:
+        - key: 'node.kubernetes.io/not-ready'
+          operator: 'Exists'
+          effect: 'NoSchedule'
+        - key: 'node.gke.io/balloon-pod-resize'
+          operator: 'Exists'
+          effect: 'NoSchedule'
+      containers:
+        - name: gateway
+          image: gcr.io/tms-dev-464113/gateway
+          env:
+            - name: PORT
+              value: '4000'
+            - name: USER_SERVICE_URL
+              value: http://user-srv:4001
+            - name: VEHICLE_SERVICE_URL
+              value: http://vehicle-srv:4002
+            - name: JWT_SECRET
+              value: your-super-secret-key-change-this-in-production
+            - name: NODE_ENV
+              value: development
+          ports:
+            - containerPort: 4000
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-srv
+spec:
+  selector:
+    app: gateway
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: 4000
+  type: ClusterIP
