@@ -12,9 +12,17 @@ spec:
       labels:
         app: user-service
     spec:
+      tolerations:
+        - key: 'node.kubernetes.io/not-ready'
+          operator: 'Exists'
+          effect: 'NoSchedule'
+        - key: 'node.gke.io/balloon-pod-resize'
+          operator: 'Exists'
+          effect: 'NoSchedule'
       containers:
         - name: user-service
-          image: yaseralazm/user-service
+          # image: yaseralazm/user-service
+          image: gcr.io/tms-dev-464113/user-service
           env:
             - name: DATABASE_URL
               value: postgresql://postgres:postgres@postgres-srv:5432/tms?schema=public
@@ -24,6 +32,10 @@ spec:
               value: development # Change this manually for prod
             - name: PORT
               value: '4001'
+            - name: KAFKA_BROKERS
+              value: kafka-srv:9092
+            - name: KAFKA_CLIENT_ID
+              value: user-service
           ports:
             - containerPort: 4001
           resources:
@@ -52,7 +64,8 @@ spec:
               memory: '128Mi'
               cpu: '200m'
         - name: migrate
-          image: yaseralazm/user-service
+          # image: yaseralazm/user-service
+          image: gcr.io/tms-dev-464113/user-service
           env:
             - name: DATABASE_URL
               value: postgresql://postgres:postgres@postgres-srv:5432/tms?schema=public
