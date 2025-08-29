@@ -1,16 +1,23 @@
 apiVersion: skaffold/v2alpha3
 kind: Config
 metadata:
-  name: tms-user-service
+  name: tms-services
 deploy:
   kubectl:
     manifests:
       - ./infra/k8s/*
 build:
-  local:
-    push: false
+  googleCloudBuild:
+    projectId: tms-dev-464113
+  # local:
+  #   push: true
+  #   useDockerCLI: true
+  #   useBuildkit: true
+  #   concurrency: 1
   artifacts:
-    - image: yaseralazm/user-service
+    # - image: yaseralazm/user-service
+    #   context: user-service
+    - image: gcr.io/tms-dev-464113/user-service
       context: user-service
       docker:
         dockerfile: Dockerfile.dev
@@ -29,21 +36,134 @@ build:
           - src: 'prisma/**/*'
             dest: /app/prisma/
             strip: prisma/
+    - image: gcr.io/tms-dev-464113/vehicle-service
+      context: vehicle-service
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        manual:
+          - src: 'src/**/*.ts'
+            dest: /app/src
+            strip: src/
+          - src: 'src/**/*.js'
+            dest: /app/src
+            strip: src/
+          - src: 'package.json'
+            dest: /app/package.json
+          - src: 'tsconfig*.json'
+            dest: /app/
+          - src: 'prisma/**/*'
+            dest: /app/prisma/
+            strip: prisma/
+    - image: gcr.io/tms-dev-464113/gateway
+      context: gateway
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        manual:
+          - src: 'src/**/*.ts'
+            dest: /app/src
+            strip: src/
+          - src: 'src/**/*.js'
+            dest: /app/src
+            strip: src/
+          - src: 'package.json'
+            dest: /app/package.json
+          - src: 'tsconfig*.json'
+            dest: /app/
 portForward:
   - resourceType: service
     resourceName: user-srv
     port: 4001
     localPort: 4001
   - resourceType: service
+    resourceName: vehicle-srv
+    port: 4002
+    localPort: 4002
+  - resourceType: service
     resourceName: postgres-srv
     port: 5432
     localPort: 5432
+  - resourceType: service
+    resourceName: kafka-srv
+    port: 9092
+    localPort: 9092
+  - resourceType: service
+    resourceName: ingress-nginx-controller
+    namespace: ingress-nginx
+    port: 80
+    localPort: 80
+  - resourceType: service
+    resourceName: ingress-nginx-controller
+    namespace: ingress-nginx
+    port: 443
+    localPort: 443
+  - resourceType: service
+    resourceName: gateway-srv
+    port: 4000
+    localPort: 4000
 profiles:
+  - name: vehicle-only
+    deploy:
+      kubectl:
+        manifests:
+          - ./infra/k8s/postgres-depl.yml
+          - ./infra/k8s/vehicle-depl.yml
+          - ./infra/k8s/ingress-srv.yml
+    build:
+      artifacts:
+        - image: yaseralazm/vehicle-service
+          context: vehicle-service
+          docker:
+            dockerfile: Dockerfile.dev
+          sync:
+            manual:
+              - src: 'src/**/*.ts'
+                dest: /app/src
+                strip: src/
+              - src: 'src/**/*.js'
+                dest: /app/src
+                strip: src/
+              - src: 'package.json'
+                dest: /app/package.json
+              - src: 'tsconfig*.json'
+                dest: /app/
+              - src: 'prisma/**/*'
+                dest: /app/prisma/
+                strip: prisma/
+    portForward:
+      - resourceType: service
+        resourceName: vehicle-srv
+        port: 4002
+        localPort: 4002
+      - resourceType: service
+        resourceName: postgres-srv
+        port: 5432
+        localPort: 5432
   - name: dev
     build:
       artifacts:
         - image: yaseralazm/user-service
           context: user-service
+          docker:
+            dockerfile: Dockerfile.dev
+          sync:
+            manual:
+              - src: 'src/**/*.ts'
+                dest: /app/src
+                strip: src/
+              - src: 'src/**/*.js'
+                dest: /app/src
+                strip: src/
+              - src: 'package.json'
+                dest: /app/package.json
+              - src: 'tsconfig*.json'
+                dest: /app/
+              - src: 'prisma/**/*'
+                dest: /app/prisma/
+                strip: prisma/
+        - image: yaseralazm/vehicle-service
+          context: vehicle-service
           docker:
             dockerfile: Dockerfile.dev
           sync:
