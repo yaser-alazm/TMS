@@ -33,6 +33,12 @@ spec:
               value: your-super-secret-key-change-this-in-production
             - name: NODE_ENV
               value: development
+            - name: USER_SERVICE_URL
+              value: http://user-srv:4001
+            - name: AUTH_JWKS_URI
+              value: http://user-srv:4001/.well-known/jwks.json
+            - name: AUTH_ISSUER
+              value: yatms-user-service
           ports:
             - containerPort: 4000
           resources:
