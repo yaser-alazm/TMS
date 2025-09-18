@@ -37,13 +37,25 @@ spec:
             - name: KAFKA_CLIENT_ID
               value: user-service
             - name: JWT_KID
-              value: primary-2025-09
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-keys
+                  key: jwt-kid
             - name: JWT_ISSUER
-              value: yatms-user-service
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-keys
+                  key: jwt-issuer
             - name: JWT_PRIVATE_KEY_PEM
-              value: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDDrXmNetR5vtqn\n/4wwJB+5wJ4INPQOGv5XIz/Wg9ylVQzubf42jHBnOER5qyK9iXrnLePHhRKrLuSZ\nHdtwBZNRy2GhayLuAbjwFR3239+PasPpdzf3lDuaPGzXSNFBMgI8vYNXengtczBN\no6XxklZ7D2kzn8dDDVh+Jf0/Miel89rhynVwYXb9n9ZyTg36HbeyRIzYjF3Qd4Qh\nANSi6AXmSATArP2s8jtwb7wTIlf3hZevUnQI7yFk1YFKZuRcdGKAr5gtDT9b9YKc\nU+jEMs06BEXERSysjfg6CMwTJaYKeboJGrLCxk0H5TUu8LCmlvwaDLM7e2po5h8Y\n8wS0tIMBAgMBAAECggEAYHnPTGobCEuJEvtz6uhkm/jT8cfp7GpyrBO9Dc7Fot5k\nGcoxZEOpx7p+SF6QKlL2PbTqcRyzL6NXIgcOghS9pb5YzHU+K4q92+ENfQKz/sns\n/dbByVdUa58PKrXENhip8bieYSsIxZ/dWOoujwRPjyzx+Xn1jKGv18JzMg1QbwkF\n3UbdLGdkLtN+dB/1kt+4VHr+JqSBlBQXOgEB6t08GM97gYJWjzQzj3ilvdUmY+1H\npuH+dzTBaxSkYqBiPMhpHFcJj7VHjpAMiuKtU/lvhpgE2YedVP2ejBlFYl5gjHUZ\nbGvkcQzkfSq/qFP6I37FdkBOguRu5y9CFEa929TCAQKBgQD7N3w+9abKFwTrwGXJ\nNma5XAKB5IXm99sh0UxkhMhr+2et0uxrxEvMR0fauMzAYY4kdYhZ2RLbal+wDpTn\nmJVK9neYw0wqWlPujyz1Lj1Ao00k8Bw5EQgCCz8bKIlUneZiA0dPTrcIUpsMynfG\nvA+wFX3SwuIrP4NEQcW9MQZqSQKBgQDHZ0X0J+qGMEHzMO/83em8tAl8NDXPEbyO\nUEX+0sTYrmGrB2AqVJFelsX6JbRQluNknWm4IB299jqfa9N4UbMO4d/6CRsXIYP0\nTjA0Ho6nBNBDfIfX77wP1sBs8SwsEdTFWD5e2cb4EB9F964SW6iAZRtLLlrdVaQx\nE1Hlsg4S+QKBgC5DUJEzoeyTgqd7vgLpDs/R3vBWykX3nRZEOgJE5bflC3naXwmV\nk7Ph6Jyh7ar8DDYwotSRAkT/+PEuLkPcOJoee3XZeVxPWCeVnFzmkAcoS5ui0D++\nIDBoK83vkCLSFUw1eFtljpVsyPr5CkfB+E2gF5TJqOb4Ak9+oVCvB5RpAoGBAIb5\n5yZQZrYSsHG37JtUc8WicNE8Xjgen24N9HN7pHewArjMs1G0EPrgQH8FSrtKh/4x\nd8CFLNzLcf8789d8JiKqzvvncgkETNfwnTyKerGf1oH4J9QJmVl3WqXj0qy6HTbA\ndueprr932lN4RsJyfOr8ha8sX6F3OT9m/obnMhOxAoGBALLLdxbJ/CPz03vUyLy8\nsMCSY+uQ2WtnmKcFtvNUs6XIw7rh3gq8CI1957+T301YaStAWpF1HDefz+3ZcL8T\nBPJcDu83mgf3B5cq+GB7rr9Pvk+frc3XdKY0hhshonUEC/9D4B14xpRNqHTyTzg3\ng2xw0iijMSGxoMYhWATeOeE+\n-----END PRIVATE KEY-----"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-keys
+                  key: jwt-private-key
             - name: JWT_PUBLIC_KEY_PEM
-              value: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw615jXrUeb7ap/+MMCQf\nucCeCDT0Dhr+VyM/1oPcpVUM7m3+NoxwZzhEeasivYl65y3jx4USqy7kmR3bcAWT\nUcthoWsi7gG48BUd9t/fj2rD6Xc395Q7mjxs10jRQTICPL2DV3p4LXMwTaOl8ZJW\new9pM5/HQw1YfiX9PzInpfPa4cp1cGF2/Z/Wck4N+h23skSM2Ixd0HeEIQDUougF\n5kgEwKz9rPI7cG+8EyJX94WXr1J0CO8hZNWBSmbkXHRigK+YLQ0/W/WCnFPoxDLN\nOgRFxEUsrI34OgjMEyWmCnm6CRqywsZNB+U1LvCwppb8GgyzO3tqaOYfGPMEtLSD\nAQIDAQAB\n-----END PUBLIC KEY-----"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-keys
+                  key: jwt-public-key
           ports:
             - containerPort: 4001
           resources:
