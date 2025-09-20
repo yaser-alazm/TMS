@@ -336,7 +336,178 @@ erDiagram
 - Contract tests (Pact) for REST and message schemas; provider verification in CI
 - E2E through gateway (Playwright/Postman/Newman); load tests for GPS ingest using k6
 
-## 16. Roadmap (Prioritized)
+## 16. Target Architecture (Suggested Technical Requirements)
+
+### 16.1 Core Services
+- **Gateway/API**: 
+  - Request routing with intelligent load balancing
+  - JWT verification using RS256 with JWKS endpoint
+  - Rate limiting (per-user and per-IP)
+  - Request logging with structured JSON
+  - Tracing headers propagation (trace/span IDs)
+  - Circuit breaker pattern for downstream services
+
+- **User Service**: 
+  - User management (CRUD operations)
+  - Authentication (login, logout, refresh tokens)
+  - Authorization (roles and permissions)
+  - Session management with refresh token rotation
+  - Organizations/tenants support for multi-tenancy
+  - Audit logging for security events
+
+- **Vehicle Service**: 
+  - Vehicle lifecycle management
+  - Driver-vehicle assignments with history tracking
+  - Maintenance records and scheduling
+  - Document management (registration, insurance) with object storage
+  - Vehicle status tracking and alerts
+
+- **GPS Service**: 
+  - High-frequency GPS data ingestion (HTTP/MQTT)
+  - Real-time location persistence
+  - Event publishing for location updates
+  - Geofencing capabilities
+  - Location history and analytics
+
+- **Traffic Service**: 
+  - External traffic API consumption
+  - Traffic incident caching and management
+  - Route optimization with ETA modifiers
+  - Real-time traffic alert publishing
+  - Historical traffic pattern analysis
+
+- **Optional Future Services**:
+  - Order/Shipment Management
+  - Dispatch/Planning Engine
+  - Route Optimization Service
+  - Billing and Invoicing
+
+### 16.2 Communication Patterns
+- **Synchronous Communication**:
+  - REST APIs via gateway for client requests
+  - Internal service-to-service communication via REST or gRPC
+  - Request/response patterns with timeout handling
+  - Circuit breaker implementation for resilience
+
+- **Asynchronous Communication**:
+  - Kafka topics for domain events:
+    - `user.created`, `user.updated`, `user.deleted`
+    - `vehicle.created`, `vehicle.updated`, `vehicle.assigned`
+    - `location.updated`, `location.geofence_entered`
+    - `maintenance.created`, `maintenance.due`
+    - `traffic.alert`, `traffic.incident`
+  - Event-driven architecture for loose coupling
+  - Message ordering and idempotency guarantees
+
+### 16.3 Data Storage Strategy
+- **Primary Storage**:
+  - PostgreSQL for OLTP per service (Prisma ORM)
+  - Database-per-service pattern for data isolation
+  - ACID compliance for transactional operations
+
+- **Caching Layer**:
+  - Redis for session management
+  - Rate limiting counters
+  - Hot data lookups (vehicle current location)
+  - Cache invalidation strategies
+
+- **Object Storage**:
+  - S3/GCS for document storage
+  - Signed URLs for secure access
+  - Lifecycle policies for data retention
+
+- **Time Series Data**:
+  - PostgreSQL partitioned tables for GPS points
+  - TimescaleDB for high-volume time series data
+  - Spatial indexing for geographic queries
+  - Data compression and retention policies
+
+### 16.4 Security Architecture
+- **Authentication**:
+  - JWT with RS256 algorithm
+  - Key rotation via JWKS endpoint
+  - Refresh token mechanism with rotation
+  - Role and permission-based access control
+
+- **Authorization**:
+  - User context propagation via headers
+  - Correlation ID forwarding for tracing
+  - Service-to-service authentication via mTLS
+  - Internal service tokens for cross-service calls
+
+- **Data Protection**:
+  - Encryption at rest and in transit
+  - PII data handling compliance
+  - Secret management via KMS/SealedSecrets
+  - Audit logging for security events
+
+### 16.5 Observability Stack
+- **Distributed Tracing**:
+  - OpenTelemetry instrumentation
+  - HTTP server/client tracing
+  - Kafka producer/consumer tracing
+  - Trace collection via OTLP collector
+  - Visualization with Grafana Tempo/Jaeger
+
+- **Metrics Collection**:
+  - Prometheus for metrics scraping
+  - Custom business metrics
+  - Infrastructure metrics
+  - Dashboards in Grafana
+
+- **Centralized Logging**:
+  - Structured JSON logging
+  - Centralized log aggregation (ELK/Loki)
+  - Log correlation with traces
+  - Retention and archival policies
+
+### 16.6 Resilience Patterns
+- **Fault Tolerance**:
+  - Circuit breakers for external dependencies
+  - Retry mechanisms with exponential backoff
+  - Timeout configurations per service
+  - Idempotency keys for write operations
+
+- **Data Consistency**:
+  - Schema validation at service boundaries (Zod)
+  - Event sourcing for critical operations
+  - Saga pattern for distributed transactions
+  - Outbox pattern for reliable messaging
+
+### 16.7 CI/CD Pipeline
+- **Per-Service Pipelines**:
+  - Lint and code quality checks
+  - Unit and integration testing
+  - Docker image building and scanning
+  - Security vulnerability scanning
+  - Image push to registry
+
+- **Deployment Strategy**:
+  - Skaffold for local development
+  - ArgoCD for production deployments
+  - Database migrations per service
+  - Blue-green or rolling deployments
+
+### 16.8 Infrastructure Requirements
+- **Kubernetes Platform**:
+  - Readiness and liveness probes
+  - Horizontal Pod Autoscaling (HPA)
+  - Resource limits and requests
+  - Service mesh (optional)
+
+- **Networking**:
+  - Ingress with TLS termination
+  - Service discovery and load balancing
+  - Network policies for security
+  - Secret management integration
+
+- **Message Streaming**:
+  - Kafka with proper partitioning
+  - Consumer group management
+  - Retention policies per topic
+  - Monitoring and alerting
+
+## 17. Implementation Roadmap (Prioritized)
 1) Security hardening (RS256/JWKS, request-id propagation, rate limits)
 2) Complete user-service schema and auth flows (refresh rotation, revocation)
 3) Vehicle assignments/documents; maintenance reminders and events
