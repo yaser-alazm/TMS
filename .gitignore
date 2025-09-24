@@ -86,4 +86,5 @@ coverage/
 
 # Misc
 *.tgz
-*.tar.gz
+*.tar.gzapps/user-service
+apps/vehicle-service
