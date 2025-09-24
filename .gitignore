@@ -86,9 +86,10 @@ coverage/
 
 # Misc
 *.tgz
-*.tar.gzapps/user-service
-apps/vehicle-service
-apps/gateway
-apps/gps-service
-apps/traffic-service
-apps/common
+*.tar.gz# Service directories are now managed as submodules
+# apps/user-service
+# apps/vehicle-service  
+# apps/gateway
+# apps/gps-service
+# apps/traffic-service
+# apps/common

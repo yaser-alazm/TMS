@@ -1,0 +1,15 @@
+[submodule "apps/user-service"]
+	path = apps/user-service
+	url = https://github.com/yaser-alazm/TMS-backend-user-service.git
+[submodule "apps/gateway"]
+	path = apps/gateway
+	url = https://github.com/yaser-alazm/TMS-backend-gateway.git
+[submodule "apps/vehicle-service"]
+	path = apps/vehicle-service
+	url = https://github.com/yaser-alazm/TMS-backend-vehicle-service.git
+[submodule "apps/client"]
+	path = apps/client
+	url = https://github.com/yaser-alazm/TMS-client.git
+[submodule "apps/common"]
+	path = apps/common
+	url = https://github.com/yaser-alazm/TMS-common.git
