@@ -21,7 +21,13 @@
     "dev:install": "./scripts/install-dependencies.sh",
     "dev:fix-kafka": "./scripts/fix-kafka-cluster-id.sh",
     "dev:clean-ports": "./scripts/clean-dev-ports.sh",
-    "dev:seed": "./scripts/seed-databases.sh"
+    "dev:seed": "./scripts/seed-databases.sh",
+    "service:start": "./scripts/service-manager.sh start",
+    "service:stop": "./scripts/service-manager.sh stop",
+    "service:restart": "./scripts/service-manager.sh restart",
+    "service:health": "./scripts/service-manager.sh health",
+    "service:status": "./scripts/service-manager.sh status",
+    "service:install": "./scripts/service-manager.sh install"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
