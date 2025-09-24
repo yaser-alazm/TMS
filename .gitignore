@@ -88,3 +88,7 @@ coverage/
 *.tgz
 *.tar.gzapps/user-service
 apps/vehicle-service
+apps/gateway
+apps/gps-service
+apps/traffic-service
+apps/common
