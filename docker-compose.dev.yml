@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  # Development Infrastructure Services
+  
+  # User Database
+  postgres-user-dev:
+    image: postgres:15
+    container_name: tms-postgres-user-dev
+    environment:
+      POSTGRES_DB: tms_user
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_user_dev_data:/var/lib/postgresql/data
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+
+  # Vehicle Database
+  postgres-vehicle-dev:
+    image: postgres:15
+    container_name: tms-postgres-vehicle-dev
+    environment:
+      POSTGRES_DB: tms_vehicle
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_vehicle_dev_data:/var/lib/postgresql/data
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+
+  # GPS Database
+  postgres-gps-dev:
+    image: postgres:15
+    container_name: tms-postgres-gps-dev
+    environment:
+      POSTGRES_DB: tms_gps
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_gps_dev_data:/var/lib/postgresql/data
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis-dev:
+    image: redis:7-alpine
+    container_name: tms-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Zookeeper for Kafka
+  zookeeper-dev:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: tms-zookeeper-dev
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_dev_data:/var/lib/zookeeper/data
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+
+  # Kafka Message Broker
+  kafka-dev:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: tms-kafka-dev
+    depends_on:
+      - zookeeper-dev
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-dev:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-dev:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 1
+      KAFKA_LOG_SEGMENT_BYTES: 1048576
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: "-Xmx256M -Xms128M"
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 6000
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 6000
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_dev_data:/var/lib/kafka/data
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+
+  # Development Tools
+  
+  # Adminer for database management
+  adminer-dev:
+    image: adminer:4.8.1
+    container_name: tms-adminer-dev
+    ports:
+      - "8080:8080"
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+
+  # Redis Commander for Redis management
+  redis-commander-dev:
+    image: rediscommander/redis-commander:latest
+    container_name: tms-redis-commander-dev
+    environment:
+      REDIS_HOSTS: local:redis-dev:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+    depends_on:
+      - redis-dev
+
+  # Kafka UI for Kafka management
+  kafka-ui-dev:
+    image: provectuslabs/kafka-ui:latest
+    container_name: tms-kafka-ui-dev
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-dev:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper-dev:2181
+    ports:
+      - "8082:8080"
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+    depends_on:
+      - kafka-dev
+
+volumes:
+  postgres_user_dev_data:
+  postgres_vehicle_dev_data:
+  postgres_gps_dev_data:
+  redis_dev_data:
+  zookeeper_dev_data:
+  kafka_dev_data:
+
+networks:
+  tms-dev-network:
+    driver: bridge
+    name: tms-dev-network

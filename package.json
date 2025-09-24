@@ -7,11 +7,26 @@
   "license": "UNLICENSED",
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "dev": "./scripts/start-local-dev.sh",
+    "dev:microservices": "./scripts/start-microservices-dev.sh",
+    "dev:stop": "./scripts/stop-local-dev.sh",
+    "dev:status": "./scripts/dev-status.sh",
+    "dev:infra": "docker-compose -f docker-compose.dev.yml up -d",
+    "dev:infra:stop": "docker-compose -f docker-compose.dev.yml down",
+    "dev:infra:logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "dev:reset": "./scripts/reset-dev-environment.sh",
+    "dev:test-db": "./scripts/test-db-connection.sh",
+    "dev:test-kafka": "./scripts/test-kafka-connection.sh",
+    "dev:install": "./scripts/install-dependencies.sh",
+    "dev:fix-kafka": "./scripts/fix-kafka-cluster-id.sh",
+    "dev:clean-ports": "./scripts/clean-dev-ports.sh",
+    "dev:seed": "./scripts/seed-databases.sh"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
+    "concurrently": "^8.2.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
