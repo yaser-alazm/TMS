@@ -13,3 +13,9 @@
 [submodule "apps/common"]
 	path = apps/common
 	url = https://github.com/yaser-alazm/TMS-common.git
+[submodule "apps/gps-service"]
+	path = apps/gps-service
+	url = https://github.com/yaser-alazm/TMS-backend-gps.git
+[submodule "apps/traffic-service"]
+	path = apps/traffic-service
+	url = https://github.com/yaser-alazm/TMS-backend-traffic.git
