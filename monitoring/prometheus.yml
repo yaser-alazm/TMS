@@ -1,0 +1,57 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter-dev:9100']
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor-dev:8080']
+
+  # Gateway Service
+  - job_name: 'gateway-service'
+    static_configs:
+      - targets: ['host.docker.internal:4000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # User Service
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['host.docker.internal:4001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Vehicle Service
+  - job_name: 'vehicle-service'
+    static_configs:
+      - targets: ['host.docker.internal:4002']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # GPS Service
+  - job_name: 'gps-service'
+    static_configs:
+      - targets: ['host.docker.internal:4003']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Traffic Service
+  - job_name: 'traffic-service'
+    static_configs:
+      - targets: ['host.docker.internal:4004']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
