@@ -2,28 +2,32 @@
 
 ## Overview
 
-The Transportation Management System (TMS) implements a robust JWT-based authentication system using RS256 asymmetric encryption with JWKS (JSON Web Key Set) for secure token verification. The system follows a microservices architecture with separate authentication concerns handled by different services.
+The Transportation Management System (TMS) implements a hybrid JWT-based authentication system using RS256 asymmetric encryption. The system uses HTTP-only cookies for secure token storage and follows a hybrid architecture where authentication flows go directly to the User Service, while other API calls go through the Gateway.
 
 ## Architecture Overview
 
 ```mermaid
 graph TB
-    Client[Next.js Client] --> Gateway[API Gateway]
-    Gateway --> UserService[User Service]
+    Client[Next.js Client] --> |Auth Requests| UserService[User Service]
+    Client --> |Other API Requests| Gateway[API Gateway]
     Gateway --> VehicleService[Vehicle Service]
     Gateway --> GPSService[GPS Service]
     Gateway --> TrafficService[Traffic Service]
     
     UserService --> Database[(PostgreSQL)]
+    UserService --> Redis[(Redis Cache)]
     
     subgraph "Authentication Flow"
-        Client --> |1. Login Request| Gateway
-        Gateway --> |2. Forward to User Service| UserService
-        UserService --> |3. Generate JWT| UserService
-        UserService --> |4. Return Tokens| Gateway
-        Gateway --> |5. Set HTTP-Only Cookies| Client
-        Client --> |6. Subsequent Requests| Gateway
-        Gateway --> |7. Verify JWT with JWKS| UserService
+        Client --> |1. Login/Register| UserService
+        UserService --> |2. Generate JWT| UserService
+        UserService --> |3. Set HTTP-Only Cookies| Client
+        Client --> |4. Subsequent Auth Requests| UserService
+        UserService --> |5. Verify JWT| UserService
+    end
+    
+    subgraph "API Flow"
+        Client --> |6. Other Requests| Gateway
+        Gateway --> |7. Forward with Headers| Services
     end
 ```
 
@@ -156,7 +160,7 @@ const whitelistedPaths = [
 ```typescript
 // Access Token Cookie
 {
-  name: 'auth_token',
+  name: 'access_token',
   httpOnly: true,
   secure: false,        // true in production
   sameSite: 'lax',
@@ -170,7 +174,7 @@ const whitelistedPaths = [
   httpOnly: true,
   secure: false,        // true in production
   sameSite: 'lax',
-  maxAge: 1209600000,   // 14 days
+  maxAge: 604800000,    // 7 days
   path: '/'
 }
 ```
@@ -221,18 +225,17 @@ const queryConfig = {
 ```mermaid
 sequenceDiagram
     participant C as Client
-    participant G as Gateway
     participant U as User Service
     participant D as Database
+    participant R as Redis
 
-    C->>G: POST /api/auth/login
-    G->>U: POST /auth/login
+    C->>U: POST /auth/login
     U->>D: Validate credentials
     D-->>U: User data
     U->>U: Generate JWT + Refresh Token
-    U-->>G: { user, accessToken, refreshToken }
-    G->>G: Set HTTP-only cookies
-    G-->>C: { user }
+    U->>R: Cache user data
+    U->>U: Set HTTP-only cookies
+    U-->>C: { user } (tokens in cookies)
     C->>C: Update AuthContext state
     C->>C: Redirect to dashboard
 ```
@@ -241,7 +244,7 @@ sequenceDiagram
 
 1. **Client Login Request**:
    ```typescript
-   const response = await fetch('/api/auth/login', {
+   const response = await fetch('http://localhost:4001/auth/login', {
      method: 'POST',
      headers: { 'Content-Type': 'application/json' },
      body: JSON.stringify({ username, password }),
@@ -249,20 +252,17 @@ sequenceDiagram
    })
    ```
 
-2. **Gateway Processing**:
-   - Forwards request to User Service
-   - Receives tokens in response
-   - Sets HTTP-only cookies for both tokens
-
-3. **User Service Processing**:
+2. **User Service Processing**:
    - Validates credentials against database
    - Generates RS256-signed JWT with user claims
    - Creates refresh token and stores in database
-   - Returns user data and tokens
+   - Caches user data in Redis
+   - Sets HTTP-only cookies for both tokens
+   - Returns user data (tokens not in response body)
 
-4. **Client State Update**:
+3. **Client State Update**:
    ```typescript
-   // Direct AuthContext update (bypasses React Query timing issues)
+   // Direct AuthContext update
    handleLogin(userData)
    
    // Also update React Query cache for consistency
@@ -271,17 +271,33 @@ sequenceDiagram
 
 ### 2. Authenticated Request Flow
 
+**For Authentication Requests (Direct to User Service):**
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant U as User Service
+    participant R as Redis
+
+    C->>U: GET /users/me (with cookies)
+    U->>U: Extract JWT from cookie
+    U->>U: Verify JWT signature
+    U->>U: Extract user claims
+    U->>R: Check cache for user data
+    R-->>U: Cached user data or null
+    U-->>C: User profile data
+```
+
+**For Other API Requests (Through Gateway):**
+
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant G as Gateway
-    participant U as User Service
     participant S as Service
 
-    C->>G: GET /api/users/me (with cookies)
+    C->>G: GET /api/vehicles (with cookies)
     G->>G: Extract JWT from cookie
-    G->>U: GET /.well-known/jwks.json
-    U-->>G: JWKS
     G->>G: Verify JWT signature
     G->>G: Extract user claims
     G->>S: Forward request with user headers
@@ -293,28 +309,38 @@ sequenceDiagram
 
 1. **Client Request**:
    ```typescript
-   const response = await fetchWithAuth('/api/users/me')
-   ```
-
-2. **Gateway Middleware**:
-   ```typescript
-   // Extract token from cookie
-   const token = req.cookies?.auth_token
-   
-   // Verify JWT with JWKS
-   const { payload } = await jwtVerify(token, jwks, {
-     algorithms: ['RS256'],
-     issuer: 'yatms-user-service'
+   // For auth requests (direct to user service)
+   const response = await fetch('http://localhost:4001/users/me', {
+     credentials: 'include'
    })
    
-   // Add user context to request headers
-   req.headers['x-auth-user-id'] = payload.userId
-   req.headers['x-auth-user-email'] = payload.email
-   req.headers['x-auth-user-roles'] = JSON.stringify(payload.roles)
+   // For other requests (through gateway)
+   const response = await fetch('http://localhost:4000/api/vehicles', {
+     credentials: 'include'
+   })
+   ```
+
+2. **User Service JWT Verification**:
+   ```typescript
+   // Extract token from cookie
+   const token = req.cookies?.access_token
+   
+   // Verify JWT with public key
+   const payload = jwt.verify(token, publicKey, {
+     algorithms: ['RS256'],
+     issuer: 'yatms-user-service-dev'
+   })
+   
+   // Add user context to request
+   req.user = {
+     userId: payload.userId,
+     email: payload.email,
+     roles: payload.roles
+   }
    ```
 
 3. **Service Processing**:
-   - Receives request with user context headers
+   - Receives request with user context
    - Processes business logic
    - Returns response
 
@@ -323,19 +349,16 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant C as Client
-    participant G as Gateway
     participant U as User Service
     participant D as Database
 
-    C->>G: POST /api/auth/refresh (with refresh cookie)
-    G->>U: POST /auth/refresh
+    C->>U: POST /auth/refresh (with refresh cookie)
     U->>D: Validate refresh token
     D-->>U: Valid token
     U->>U: Generate new JWT + Refresh Token
     U->>D: Store new refresh token
-    U-->>G: { accessToken, refreshToken }
-    G->>G: Update cookies
-    G-->>C: Success
+    U->>U: Update HTTP-only cookies
+    U-->>C: Success (tokens in cookies)
 ```
 
 **Automatic Token Refresh:**
@@ -349,16 +372,13 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant C as Client
-    participant G as Gateway
     participant U as User Service
     participant D as Database
 
-    C->>G: POST /api/auth/logout
-    G->>U: POST /auth/logout
+    C->>U: POST /auth/logout
     U->>D: Delete refresh tokens
-    U-->>G: Success
-    G->>G: Clear cookies
-    G-->>C: Success
+    U->>U: Clear HTTP-only cookies
+    U-->>C: Success
     C->>C: Clear AuthContext state
     C->>C: Redirect to login
 ```
@@ -523,7 +543,7 @@ npx prisma db seed
 
 ### Authentication Endpoints
 
-#### POST /api/auth/login
+#### POST /auth/login
 ```typescript
 // Request
 {
@@ -538,27 +558,38 @@ npx prisma db seed
     email: string
     roles: string[]
   }
-  accessToken: string  // Set as HTTP-only cookie
-  refreshToken: string  // Set as HTTP-only cookie
+  // Tokens are set as HTTP-only cookies, not in response body
 }
 ```
 
-#### POST /api/auth/refresh
+#### POST /auth/refresh
 ```typescript
 // Request (refresh token sent via cookie)
 // Response
 {
-  accessToken: string  // Set as HTTP-only cookie
-  refreshToken: string  // Set as HTTP-only cookie
+  message: "Token refreshed successfully"
+  // New tokens are set as HTTP-only cookies
 }
 ```
 
-#### POST /api/auth/logout
+#### POST /auth/logout
 ```typescript
 // Request (tokens sent via cookies)
 // Response
 {
   message: "Logged out successfully"
+  // Cookies are cleared by server
+}
+```
+
+#### GET /users/me
+```typescript
+// Request (access token sent via cookie)
+// Response
+{
+  userId: string
+  email: string
+  roles: string[]
 }
 ```
 
