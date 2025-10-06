@@ -140,7 +140,7 @@ VEHICLE_SERVICE_URL=http://localhost:4002
 GPS_SERVICE_URL=http://localhost:4003
 TRAFFIC_SERVICE_URL=http://localhost:4004
 AUTH_JWKS_URI=http://localhost:4001/.well-known/jwks.json
-AUTH_ISSUER=yatms-user-service
+AUTH_ISSUER=yatms-user-service-dev
 REDIS_URL=redis://localhost:6379
 NODE_ENV=development
 ```

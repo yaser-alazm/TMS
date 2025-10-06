@@ -49,7 +49,7 @@ graph TB
 JWT_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 JWT_PUBLIC_KEY_PEM="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 JWT_KID="primary-2025-09"  # Key ID for JWKS
-JWT_ISSUER="yatms-user-service"
+JWT_ISSUER="yatms-user-service-dev"
 
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/tms"
@@ -114,7 +114,7 @@ RefreshToken {
     "roles": ["admin", "user"],
     "iat": 1640995200,
     "exp": 1640998800,
-    "iss": "yatms-user-service"
+    "iss": "yatms-user-service-dev"
   }
 }
 ```
@@ -138,7 +138,7 @@ TRAFFIC_SERVICE_URL="http://traffic-srv:4004"
 
 # JWT Verification
 AUTH_JWKS_URI="http://user-srv:4001/.well-known/jwks.json"
-AUTH_ISSUER="yatms-user-service"
+AUTH_ISSUER="yatms-user-service-dev"
 
 # Service Configuration
 PORT=4000
@@ -466,16 +466,16 @@ cat public.pem | tr '\n' '\\n'
 JWT_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----"
 JWT_PUBLIC_KEY_PEM="-----BEGIN PUBLIC KEY-----\\n...\\n-----END PUBLIC KEY-----"
 JWT_KID="primary-2025-09"
-JWT_ISSUER="yatms-user-service"
+JWT_ISSUER="yatms-user-service-dev"
 DATABASE_URL="postgresql://user:password@localhost:5432/tms"
 
 # Gateway (.env)
 USER_SERVICE_URL="http://localhost:4001"
 AUTH_JWKS_URI="http://localhost:4001/.well-known/jwks.json"
-AUTH_ISSUER="yatms-user-service"
+AUTH_ISSUER="yatms-user-service-dev"
 
 # Client (.env.local)
-NEXT_PUBLIC_API_URL="http://localhost:4000"
+NEXT_PUBLIC_API_BASE_URL="http://localhost:4000"
 ```
 
 ### 3. Database Setup

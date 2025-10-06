@@ -34,7 +34,7 @@ This guide explains how to properly secure JWT keys in your Transportation Manag
 **Usage:**
 ```bash
 # Generate new keys
-./scripts/manage-jwt-keys.sh generate primary-2025-01 yatms-user-service
+./scripts/manage-jwt-keys.sh generate primary-2025-01 yatms-user-service-dev
 
 # Apply to Kubernetes
 ./scripts/manage-jwt-keys.sh apply default
@@ -43,7 +43,7 @@ This guide explains how to properly secure JWT keys in your Transportation Manag
 ./scripts/manage-jwt-keys.sh verify default
 
 # Rotate keys
-./scripts/manage-jwt-keys.sh rotate primary-2025-01 yatms-user-service default
+./scripts/manage-jwt-keys.sh rotate primary-2025-01 yatms-user-service-dev default
 ```
 
 ### 2. Deployment Changes
