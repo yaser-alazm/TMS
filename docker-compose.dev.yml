@@ -51,6 +51,22 @@ services:
       - tms-dev-network
     restart: unless-stopped
 
+  # Traffic Database
+  postgres-traffic-dev:
+    image: postgres:15
+    container_name: tms-postgres-traffic-dev
+    environment:
+      POSTGRES_DB: traffic_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_traffic_dev_data:/var/lib/postgresql/data
+    networks:
+      - tms-dev-network
+    restart: unless-stopped
+
   # Redis Cache
   redis-dev:
     image: redis:7-alpine
@@ -237,6 +253,7 @@ volumes:
   postgres_user_dev_data:
   postgres_vehicle_dev_data:
   postgres_gps_dev_data:
+  postgres_traffic_dev_data:
   redis_dev_data:
   zookeeper_dev_data:
   kafka_dev_data:
