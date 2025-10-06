@@ -27,6 +27,10 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
 # Kill any existing processes on development ports
 print_status "Cleaning up any existing processes on development ports..."
 lsof -ti:4000,4001,4002,4003,4004,3000 | xargs kill -9 2>/dev/null || true
@@ -36,6 +40,22 @@ pkill -f "concurrently" || true
 
 # Wait for processes to fully terminate
 sleep 2
+
+# Start infrastructure services first
+print_status "Starting infrastructure services..."
+docker-compose -f docker-compose.dev.yml up -d
+
+# Wait for services to be ready
+print_status "Waiting for infrastructure services to be ready..."
+sleep 10
+
+# Fix Kafka topics to prevent leadership issues
+print_status "Fixing Kafka topics to prevent leadership issues..."
+if [ -f "./scripts/fix-kafka-topics.sh" ]; then
+    ./scripts/fix-kafka-topics.sh
+else
+    print_warning "Kafka topics fix script not found, skipping..."
+fi
 
 # Function to load environment variables from file
 load_env() {
