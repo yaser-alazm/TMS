@@ -27,7 +27,9 @@
     "service:restart": "./scripts/service-manager.sh restart",
     "service:health": "./scripts/service-manager.sh health",
     "service:status": "./scripts/service-manager.sh status",
-    "service:install": "./scripts/service-manager.sh install"
+    "service:install": "./scripts/service-manager.sh install",
+    "update:common": "./scripts/update-common-package.sh",
+    "update:common:quick": "./scripts/quick-update-common.sh"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
